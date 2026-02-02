@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Organizador de Vendas</title>
+    <link rel="stylesheet" href="/static/style.css">
+    {% if grafico_vendas_dia or grafico_produtos %}
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    {% endif %}
+</head>
+<body>
+    <h1>Organizador de Vendas</h1>
+
+    <!-- Formulário para filtros -->
+    <form method="POST">
+        <label>Data Inicial:</label>
+        <input type="date" name="data_inicio" required>
+        <label>Data Final:</label>
+        <input type="date" name="data_fim" required>
+        <label>SKU (opcional):</label>
+        <input type="text" name="sku" placeholder="Digite o SKU">
+        <button type="submit">Gerar Resumo</button>
+    </form>
+
+    <p>{{ mensagem }}</p>
+
+    <!-- Tabela de resumo -->
+    {% if not resumo.empty %}
+        <h2>Resumo por SKU e Plataforma</h2>
+        <table>
+            <thead>
+                <tr>
+                    {% for col in resumo.columns %}
+                    <th>{{ col }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for _, row in resumo.iterrows() %}
+                <tr>
+                    {% for col in resumo.columns %}
+                    <td>{{ row[col] }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <!-- Botão para exportar Excel -->
+        <form method="POST" action="/download">
+            <input type="hidden" name="dados_excel" value='{{ resumo.to_json() | safe }}'>
+            <button type="submit">Exportar Excel</button>
+        </form>
+    {% endif %}
+
+    {% if grafico_vendas_dia or grafico_produtos %}
+    <h2>Gráficos de Vendas</h2>
+    <div id="grafico_vendas_dia" style="width:100%;height:400px;"></div>
+    <div id="grafico_produtos" style="width:100%;height:400px;"></div>
+    <script>
+        var vendasDia = {{ grafico_vendas_dia|tojson|default('[]', true) }};
+        var produtos = {{ grafico_produtos|tojson|default('[]', true) }};
+
+        if(vendasDia.length > 0){
+            var dias = vendasDia.map(d => d.data);
+            var quantidades = vendasDia.map(d => d.quantidade);
+            var trace1 = {x: dias, y: quantidades, type: 'bar'};
+            Plotly.newPlot('grafico_vendas_dia', [trace1], {title: 'Vendas por Dia'});
+        }
+
+        if(produtos.length > 0){
+            var skus = produtos.map(d => d.sku);
+            var qtd = produtos.map(d => d.quantidade);
+            var trace2 = {x: skus, y: qtd, type: 'bar'};
+            Plotly.newPlot('grafico_produtos', [trace2], {title: 'Produtos Mais Vendidos'});
+        }
+    </script>
+    {% endif %}
+</body>
+</html>
