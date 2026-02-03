@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Organizador de Vendas</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     {% if grafico_vendas_dia or grafico_produtos %}
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     {% endif %}
